@@ -7,6 +7,9 @@ const IPC = {
   WORKSPACE_SAVE: "workspace:save",
   BUTTON_UPDATE: "button:update",
   BUTTON_ADD: "button:add",
+  BUTTON_DELETE: "button:delete",
+  PROFILE_ADD: "profile:add",
+  PROFILE_DELETE: "profile:delete",
 } as const;
 
 contextBridge.exposeInMainWorld("creatorDeck", {
@@ -18,4 +21,10 @@ contextBridge.exposeInMainWorld("creatorDeck", {
     ipcRenderer.invoke(IPC.BUTTON_UPDATE, profileId, pageId, button),
   addButton: (profileId: string, pageId: string): Promise<void> =>
     ipcRenderer.invoke(IPC.BUTTON_ADD, profileId, pageId),
+  deleteButton: (profileId: string, pageId: string, buttonId: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.BUTTON_DELETE, profileId, pageId, buttonId),
+  addProfile: (name: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.PROFILE_ADD, name),
+  deleteProfile: (profileId: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.PROFILE_DELETE, profileId),
 });

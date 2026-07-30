@@ -8,6 +8,9 @@ declare global {
       saveWorkspace(workspace: Workspace): Promise<void>;
       updateButton(profileId: string, pageId: string, button: Button): Promise<void>;
       addButton(profileId: string, pageId: string): Promise<void>;
+      deleteButton(profileId: string, pageId: string, buttonId: string): Promise<void>;
+      addProfile(name: string): Promise<void>;
+      deleteProfile(profileId: string): Promise<void>;
     };
   }
 }

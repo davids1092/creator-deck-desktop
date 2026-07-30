@@ -88,4 +88,50 @@ function registerIpcHandlers(): void {
     await repo.save({ ...workspace, profiles });
     wsServer?.syncWorkspace();
   });
+
+  ipcMain.handle(IPC.BUTTON_DELETE, async (_e, profileId: string, pageId: string, buttonId: string) => {
+    const workspace = await repo.load();
+    const profiles = workspace.profiles.map((p: Profile) => {
+      if (p.id !== profileId) return p;
+      const pages = p.pages.map((pg: Page) => {
+        if (pg.id !== pageId) return pg;
+        return { ...pg, buttons: pg.buttons.filter((b: Button) => b.id !== buttonId) };
+      });
+      return { ...p, pages };
+    });
+    await repo.save({ ...workspace, profiles });
+    wsServer?.syncWorkspace();
+  });
+
+  ipcMain.handle(IPC.PROFILE_ADD, async (_e, name: string) => {
+    const workspace = await repo.load();
+    const pageId = uuidv4();
+    const newProfile: Profile = {
+      id: uuidv4(),
+      name,
+      defaultPageId: pageId,
+      pages: [
+        {
+          id: pageId,
+          name: "Main",
+          columns: 3,
+          rows: 2,
+          buttons: [],
+        },
+      ],
+    };
+    await repo.save({ ...workspace, profiles: [...workspace.profiles, newProfile] });
+    wsServer?.syncWorkspace();
+  });
+
+  ipcMain.handle(IPC.PROFILE_DELETE, async (_e, profileId: string) => {
+    const workspace = await repo.load();
+    const profiles = workspace.profiles.filter((p: Profile) => p.id !== profileId);
+    const activeProfileId =
+      workspace.activeProfileId === profileId
+        ? (profiles[0]?.id ?? "")
+        : workspace.activeProfileId;
+    await repo.save({ ...workspace, profiles, activeProfileId });
+    wsServer?.syncWorkspace();
+  });
 }

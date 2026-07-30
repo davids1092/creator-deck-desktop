@@ -24,6 +24,7 @@ export interface Button {
   readonly label: string;
   readonly iconUri?: string;
   readonly soundUri?: string;
+  readonly mediaUri?: string;
   readonly style: ButtonStyle;
   readonly actions: Action[];
   readonly stateKey?: string;
