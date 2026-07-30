@@ -1,0 +1,45 @@
+{
+  "name": "creator-deck-desktop",
+  "version": "1.0.0",
+  "description": "Creator Deck — Desktop configuration app",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && npx esbuild src/renderer/index.tsx --bundle --outfile=dist/renderer/index.js --platform=browser --target=chrome114 && copy src\\renderer\\index.html dist\\renderer\\index.html",
+    "start": "npm run build && node_modules\\electron\\dist\\electron.exe dist\\main\\index.js",
+    "dev": "concurrently \"tsc -w\" \"electron .\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write src"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "concurrently": "^8.2.2",
+    "electron": "^30.0.0",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "uuid": "^9.0.0",
+    "ws": "^8.17.0",
+    "zustand": "^5.0.14"
+  },
+  "allowScripts": {
+    "electron@30.5.1": true,
+    "esbuild@0.28.1": true
+  }
+}

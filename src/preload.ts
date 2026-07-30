@@ -1,0 +1,21 @@
+import { contextBridge, ipcRenderer } from "electron";
+import type { Button, Workspace } from "./shared/entities";
+
+const IPC = {
+  GET_QR: "pairing:getQr",
+  WORKSPACE_LOAD: "workspace:load",
+  WORKSPACE_SAVE: "workspace:save",
+  BUTTON_UPDATE: "button:update",
+  BUTTON_ADD: "button:add",
+} as const;
+
+contextBridge.exposeInMainWorld("creatorDeck", {
+  getQr: (): Promise<string> => ipcRenderer.invoke(IPC.GET_QR),
+  loadWorkspace: (): Promise<Workspace> => ipcRenderer.invoke(IPC.WORKSPACE_LOAD),
+  saveWorkspace: (workspace: Workspace): Promise<void> =>
+    ipcRenderer.invoke(IPC.WORKSPACE_SAVE, workspace),
+  updateButton: (profileId: string, pageId: string, button: Button): Promise<void> =>
+    ipcRenderer.invoke(IPC.BUTTON_UPDATE, profileId, pageId, button),
+  addButton: (profileId: string, pageId: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.BUTTON_ADD, profileId, pageId),
+});

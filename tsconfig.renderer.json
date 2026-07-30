@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "None",
+    "moduleResolution": "node",
+    "resolveJsonModule": false,
+    "outDir": "dist/renderer"
+  },
+  "include": ["src/renderer", "src/shared"]
+}
