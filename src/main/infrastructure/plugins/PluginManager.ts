@@ -16,6 +16,10 @@ export class PluginManager {
     await plugin.execute(action, context);
   }
 
+  get(id: string): IPlugin | undefined {
+    return this.plugins.get(id);
+  }
+
   list(): IPlugin[] {
     return Array.from(this.plugins.values());
   }

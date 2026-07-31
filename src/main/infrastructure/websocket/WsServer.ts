@@ -1,8 +1,12 @@
 import { WebSocketServer, WebSocket } from "ws";
+import { BrowserWindow } from "electron";
 import type { WsEnvelope, MobileToDesktopEvent, DesktopToMobileMessage } from "../../../shared/events";
 import type { Profile, Page, Button } from "../../../shared/entities";
 import type { IWorkspaceRepository } from "../repositories/WorkspaceRepository";
 import type { PluginManager } from "../plugins/PluginManager";
+import type { MediaServer } from "../media/MediaServer";
+import { SoundPlugin } from "../plugins/SoundPlugin";
+import { IPC } from "../../ipc/channels";
 
 export class CreatorDeckWsServer {
   private wss: WebSocketServer | null = null;
@@ -12,7 +16,8 @@ export class CreatorDeckWsServer {
     private readonly port: number,
     private readonly token: string,
     private readonly repo: IWorkspaceRepository,
-    private readonly plugins: PluginManager
+    private readonly plugins: PluginManager,
+    private readonly media: MediaServer
   ) {}
 
   start(): void {
@@ -33,9 +38,18 @@ export class CreatorDeckWsServer {
     this.client.send(JSON.stringify(envelope));
   }
 
+  disconnectClient(): void {
+    this.client?.close();
+    this.client = null;
+  }
+
   async syncWorkspace(): Promise<void> {
     const workspace = await this.repo.load();
     this.push({ type: "sync.workspace", workspace });
+  }
+
+  private notifyStatus(connected: boolean) {
+    BrowserWindow.getAllWindows()[0]?.webContents.send(IPC.CLIENT_STATUS, connected);
   }
 
   private handleConnection(ws: WebSocket): void {
@@ -46,8 +60,9 @@ export class CreatorDeckWsServer {
         return;
       }
       this.client = ws;
+      this.notifyStatus(true);
       ws.on("message", (data) => this.handleMessage(data.toString()));
-      ws.on("close", () => { this.client = null; });
+      ws.on("close", () => { this.client = null; this.notifyStatus(false); });
 
       const workspace = await this.repo.load();
       this.push({ type: "sync.workspace", workspace });
@@ -74,6 +89,29 @@ export class CreatorDeckWsServer {
         navigatePage: (pageId: string) =>
           this.push({ type: "page.navigate", pageId }),
       };
+
+      if (button.soundUri || button.mediaUri) {
+        // Stop any currently playing sound/video before starting new one
+        (this.plugins.get("builtin.sound") as SoundPlugin | undefined)?.stop();
+        this.media.clearMedia();
+
+        await Promise.all([
+          button.soundUri
+            ? this.plugins.execute(
+                {
+                  id: "_sound",
+                  type: "plugin.execute",
+                  pluginId: "builtin.sound",
+                  payload: { uri: button.soundUri, volume: button.soundVolume ?? 1 },
+                },
+                context
+              )
+            : Promise.resolve(),
+          button.mediaUri
+            ? Promise.resolve(this.media.setMedia(button.mediaUri))
+            : Promise.resolve(),
+        ]);
+      }
 
       for (const action of button.actions) {
         if (action.type === "plugin.execute") {

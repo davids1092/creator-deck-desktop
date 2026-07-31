@@ -10,6 +10,9 @@ const IPC = {
   BUTTON_DELETE: "button:delete",
   PROFILE_ADD: "profile:add",
   PROFILE_DELETE: "profile:delete",
+  CLIENT_STATUS: "client:status",
+  DISCONNECT_CLIENT: "client:disconnect",
+  GET_MEDIA_URL: "media:getUrl",
 } as const;
 
 contextBridge.exposeInMainWorld("creatorDeck", {
@@ -27,4 +30,8 @@ contextBridge.exposeInMainWorld("creatorDeck", {
     ipcRenderer.invoke(IPC.PROFILE_ADD, name),
   deleteProfile: (profileId: string): Promise<void> =>
     ipcRenderer.invoke(IPC.PROFILE_DELETE, profileId),
+  onClientStatus: (cb: (connected: boolean) => void) =>
+    ipcRenderer.on(IPC.CLIENT_STATUS, (_e, connected) => cb(connected)),
+  disconnectClient: (): Promise<void> => ipcRenderer.invoke(IPC.DISCONNECT_CLIENT),
+  getMediaUrl: (): Promise<string> => ipcRenderer.invoke(IPC.GET_MEDIA_URL),
 });

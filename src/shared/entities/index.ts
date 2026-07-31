@@ -24,6 +24,8 @@ export interface Button {
   readonly label: string;
   readonly iconUri?: string;
   readonly soundUri?: string;
+  /** Playback volume for this button's sound, from 0 (mute) to 1 (full). */
+  readonly soundVolume?: number;
   readonly mediaUri?: string;
   readonly style: ButtonStyle;
   readonly actions: Action[];

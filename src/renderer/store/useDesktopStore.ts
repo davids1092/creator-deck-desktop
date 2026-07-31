@@ -4,8 +4,11 @@ import type { Workspace, Button } from "../../shared/entities";
 interface DesktopStore {
   workspace: Workspace | null;
   qrDataUrl: string | null;
+  isConnected: boolean;
   loadWorkspace(): Promise<void>;
   generateQr(): Promise<void>;
+  setConnected(v: boolean): void;
+  disconnectClient(): Promise<void>;
   updateButton(profileId: string, pageId: string, button: Button): Promise<void>;
   addButton(profileId: string, pageId: string): Promise<void>;
   deleteButton(profileId: string, pageId: string, buttonId: string): Promise<void>;
@@ -18,15 +21,27 @@ async function reload(set: (s: Partial<DesktopStore>) => void) {
   set({ workspace });
 }
 
-export const useDesktopStore = create<DesktopStore>((set) => ({
+export const useDesktopStore = create<DesktopStore>((set) => {
+  window.creatorDeck.onClientStatus((connected) => {
+    useDesktopStore.getState().setConnected(connected);
+  });
+
+  return {
   workspace: null,
   qrDataUrl: null,
+  isConnected: false,
 
   async loadWorkspace() { await reload(set); },
 
   async generateQr() {
     const qrDataUrl = await window.creatorDeck.getQr();
     set({ qrDataUrl });
+  },
+
+  setConnected(v) { set({ isConnected: v }); },
+
+  async disconnectClient() {
+    await window.creatorDeck.disconnectClient();
   },
 
   async updateButton(profileId, pageId, button) {
@@ -53,4 +68,5 @@ export const useDesktopStore = create<DesktopStore>((set) => ({
     await window.creatorDeck.deleteProfile(profileId);
     await reload(set);
   },
-}));
+  };
+});

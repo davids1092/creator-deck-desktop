@@ -6,6 +6,7 @@ import { PluginManager } from "./infrastructure/plugins/PluginManager";
 import { SoundPlugin } from "./infrastructure/plugins/SoundPlugin";
 import { CreatorDeckWsServer } from "./infrastructure/websocket/WsServer";
 import { generatePairingSession } from "./infrastructure/websocket/QrPairing";
+import { MediaServer } from "./infrastructure/media/MediaServer";
 import { IPC } from "./ipc/channels";
 import type { Button, Profile, Page } from "../shared/entities";
 
@@ -13,6 +14,7 @@ const WS_PORT = 49152;
 let wsServer: CreatorDeckWsServer | null = null;
 let repo: JsonWorkspaceRepository;
 const pluginManager = new PluginManager();
+const mediaServer = new MediaServer();
 
 app.whenReady().then(async () => {
   const dataDir = path.join(app.getPath("userData"), "creator-deck");
@@ -20,6 +22,7 @@ app.whenReady().then(async () => {
 
   const dummyCtx = { emitStateUpdate: () => {}, navigatePage: () => {} };
   await pluginManager.register(new SoundPlugin(), dummyCtx);
+  mediaServer.start();
 
   registerIpcHandlers();
   createWindow();
@@ -27,6 +30,7 @@ app.whenReady().then(async () => {
 
 app.on("window-all-closed", () => {
   wsServer?.stop();
+  mediaServer.stop();
   if (process.platform !== "darwin") app.quit();
 });
 
@@ -46,7 +50,7 @@ function registerIpcHandlers(): void {
   ipcMain.handle(IPC.GET_QR, async () => {
     const session = await generatePairingSession(WS_PORT);
     wsServer?.stop();
-    wsServer = new CreatorDeckWsServer(WS_PORT, session.payload.token, repo, pluginManager);
+    wsServer = new CreatorDeckWsServer(WS_PORT, session.payload.token, repo, pluginManager, mediaServer);
     wsServer.start();
     return session.qrDataUrl;
   });
@@ -74,7 +78,7 @@ function registerIpcHandlers(): void {
     const newButton: Button = {
       id: uuidv4(),
       label: "New Button",
-      style: { backgroundColor: "#6b7280", textColor: "#fff", borderRadius: 8, fontSize: 14 },
+      style: { backgroundColor: "#6b7280", textColor: "#ffffff", borderRadius: 8, fontSize: 14 },
       actions: [],
     };
     const profiles = workspace.profiles.map((p: Profile) => {
@@ -134,4 +138,10 @@ function registerIpcHandlers(): void {
     await repo.save({ ...workspace, profiles, activeProfileId });
     wsServer?.syncWorkspace();
   });
+
+  ipcMain.handle(IPC.DISCONNECT_CLIENT, () => {
+    wsServer?.disconnectClient();
+  });
+
+  ipcMain.handle(IPC.GET_MEDIA_URL, () => mediaServer.url);
 }

@@ -7,4 +7,7 @@ export const IPC = {
   BUTTON_DELETE: "button:delete",
   PROFILE_ADD: "profile:add",
   PROFILE_DELETE: "profile:delete",
+  CLIENT_STATUS: "client:status",
+  DISCONNECT_CLIENT: "client:disconnect",
+  GET_MEDIA_URL: "media:getUrl",
 } as const;
